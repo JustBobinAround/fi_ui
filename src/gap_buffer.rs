@@ -1,5 +1,6 @@
 use std::{
     io::{Read, Seek, SeekFrom, Write},
+    marker::PhantomData,
     ops::Range,
 };
 
@@ -26,7 +27,7 @@ impl Gap {
     }
 
     pub fn shift_left(&mut self, delta: usize) {
-        self.offset.saturating_sub(delta);
+        self.offset = self.offset.saturating_sub(delta);
     }
 
     pub fn shift_right<const BUF_END: usize>(&mut self, delta: usize) {
@@ -36,20 +37,21 @@ impl Gap {
     }
 }
 
-pub struct GapBuffer<File: Read + Write + Seek> {
-    file: File,
+pub struct GapBuffer<'a, File: Read + Write + Seek> {
+    file: &'a mut File,
     buf: Vec<u8>,
     gap: Gap,
 }
 
-impl<File: Read + Write + Seek> GapBuffer<File> {
+impl<'a, File: Read + Write + Seek> GapBuffer<'a, File> {
     const STARTING_GAP: usize = 4096;
-    pub fn new(file: File) -> Self {
-        Self {
-            file,
-            buf: Vec::with_capacity(Self::STARTING_GAP * 2),
-            gap: Gap::new(Self::STARTING_GAP, Self::STARTING_GAP),
-        }
+    pub fn new(file: &'a mut File) -> Result<Self, std::io::Error> {
+        let mut buf = Vec::new();
+        let init_file_size = file.read_to_end(&mut buf)?;
+        let gap = Gap::new(init_file_size, Self::STARTING_GAP);
+        buf.reserve(gap.len());
+
+        Ok(Self { file, buf, gap })
     }
 
     pub fn iter(&self) -> std::iter::Chain<std::slice::Iter<'_, u8>, std::slice::Iter<'_, u8>> {
@@ -57,9 +59,18 @@ impl<File: Read + Write + Seek> GapBuffer<File> {
             .iter()
             .chain(self.buf[self.gap.end()..].iter())
     }
+
+    pub fn as_slices(&self, range: std::ops::Range<usize>) -> (&[u8], &[u8]) {
+        let gap_len = self.gap.len();
+
+        let mut left = &self.buf[0..0];
+        let mut right = &self.buf[0..0];
+
+        todo!()
+    }
 }
 
-impl<File: Read + Write + Seek> std::ops::Index<usize> for GapBuffer<File> {
+impl<'a, File: Read + Write + Seek> std::ops::Index<usize> for GapBuffer<'a, File> {
     type Output = u8;
 
     fn index(&self, idx: usize) -> &Self::Output {
