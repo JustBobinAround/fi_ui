@@ -63,10 +63,19 @@ impl<'a, File: Read + Write + Seek> GapBuffer<'a, File> {
     pub fn as_slices(&self, range: std::ops::Range<usize>) -> (&[u8], &[u8]) {
         let gap_len = self.gap.len();
 
-        let mut left = &self.buf[0..0];
-        let mut right = &self.buf[0..0];
+        let mut left = &self.buf[..self.gap.start()];
+        let mut right = &self.buf[self.gap.end()..];
 
-        todo!()
+        if range.start < left.len() {
+            let end = range.end.min(self.gap.start());
+            left = &left[range.start..end];
+        } else {
+            left = &[];
+        }
+
+        let end = range.end + self.gap.len();
+
+        (left, right)
     }
 }
 
