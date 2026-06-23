@@ -77,11 +77,19 @@ impl From<char> for CharEntry {
         }
     }
 }
+impl From<u8> for CharEntry {
+    fn from(value: u8) -> CharEntry {
+        CharEntry {
+            c: value as char,
+            props: Props::new(),
+        }
+    }
+}
 
 impl CharEntry {
     pub const fn new(c: char) -> Self {
         Self {
-            c,
+            c: c,
             props: Props::new(),
         }
     }

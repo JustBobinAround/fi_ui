@@ -1,3 +1,6 @@
+mod gap_buffer;
+mod selection_tree;
+
 use super::{
     TuiComponent,
     char_canvas::{CharEntry, Props},
@@ -7,21 +10,33 @@ use crate::{
     terminal::Terminal,
 };
 
+pub use gap_buffer::GapBuffer;
+pub use selection_tree::SelectionTree;
+
 pub struct TextEditorBuilder<AppState> {
-    use_buf: Option<fn(&AppState) -> &str>,
+    use_buf: Option<fn(&AppState) -> &GapBuffer>,
+    buf_offset: Option<fn(&AppState) -> usize>,
     line_counter: Option<fn(&AppState, usize, &mut [char; 6])>,
+    cursor: Option<fn(&AppState) -> &SelectionTree>,
 }
 
 impl<AppState> TextEditorBuilder<AppState> {
     pub fn new() -> Self {
         Self {
             use_buf: None,
+            buf_offset: None,
             line_counter: None,
+            cursor: None,
         }
     }
 
-    pub fn use_buffer(mut self, f: fn(&AppState) -> &str) -> Self {
+    pub fn use_buffer(mut self, f: fn(&AppState) -> &GapBuffer) -> Self {
         self.use_buf = Some(f);
+        self
+    }
+
+    pub fn with_buffer_offset(mut self, f: fn(&AppState) -> usize) -> Self {
+        self.buf_offset = Some(f);
         self
     }
 
@@ -30,13 +45,24 @@ impl<AppState> TextEditorBuilder<AppState> {
         self
     }
 
+    pub fn with_cursor(mut self, f: fn(&AppState) -> &SelectionTree) -> Self {
+        self.cursor = Some(f);
+        self
+    }
+
     pub fn finalize(self) -> TextEditor<AppState> {
-        let use_buf = self.use_buf.unwrap_or(|_| "");
+        let use_buf = self.use_buf.unwrap_or(|_| &gap_buffer::EMPTY_BUF);
+        let buf_offset = self.buf_offset.unwrap_or(|_| 0);
         let line_counter = self.line_counter.unwrap_or(|_, _, _| {});
+        let cursor = self
+            .cursor
+            .unwrap_or(|_| &selection_tree::EMPTY_SELECTION_TREE);
 
         TextEditor {
             use_buf,
+            buf_offset,
             line_counter,
+            cursor,
             position: Vec2::default(),
             coord: Vec2::default(),
             delta: Vec2::default(),
@@ -53,8 +79,10 @@ pub enum TextEditMode {
 }
 
 pub struct TextEditor<AppState> {
-    use_buf: fn(&AppState) -> &str,
+    use_buf: fn(&AppState) -> &GapBuffer,
+    buf_offset: fn(&AppState) -> usize,
     line_counter: fn(&AppState, usize, &mut [char; 6]),
+    cursor: fn(&AppState) -> &SelectionTree,
     position: Vec2,
     coord: Vec2,
     delta: Vec2,
@@ -118,6 +146,7 @@ impl<AppState> TextEditor<AppState> {
         app_state: &AppState,
     ) {
         let buf = (self.use_buf)(app_state);
+        let offset = (self.buf_offset)(app_state);
         self.reset_coords(terminal);
 
         let mut line_count = [' '; 6];
@@ -125,23 +154,36 @@ impl<AppState> TextEditor<AppState> {
         self.render_line_counter(terminal, bounds, app_state, &mut line_count);
 
         let vert_bound = *bounds.height() as isize / 2;
+        let cursor = (self.cursor)(app_state);
 
-        for c in buf.chars() {
-            if c == '\n' {
+        for (i, c) in buf.iter_from(offset..).enumerate() {
+            let i = i + offset;
+
+            if c == &'\n' {
                 self.line_offset += 1;
                 self.coord += Vec2::new(0, 1);
                 self.render_line_counter(terminal, bounds, app_state, &mut line_count);
             } else {
                 self.handle_wrapping(terminal, bounds);
-                self.update_term(terminal, bounds, c);
+                if cursor.contains(i.saturating_sub(1)) {
+                    // eprintln!("hit: {}", i);
+                    let cursor: CharEntry =
+                        CharEntry::new(*c).with_props(Props::new().with_reverse_video());
+                    self.update_term(terminal, bounds, cursor);
+                } else {
+                    self.update_term(terminal, bounds, *c);
+                }
             }
+
             if self.coord.y() - 1 >= vert_bound {
                 break;
             }
         }
 
-        self.handle_wrapping(terminal, bounds);
-        self.update_term(terminal, bounds, Self::INSERT_CURSOR);
+        if cursor.contains(buf.len()) {
+            self.handle_wrapping(terminal, bounds);
+            self.update_term(terminal, bounds, Self::INSERT_CURSOR);
+        }
     }
 }
 

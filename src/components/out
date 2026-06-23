@@ -1,0 +1,150 @@
+warning: unused imports: `collections::HashSet` and `sync::Arc`
+ --> src/escapes.rs:3:11
+  |
+3 | use std::{collections::HashSet, sync::Arc};
+  |           ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `prelude::AsRawFd`
+ --> src/terminal/raw_mode.rs:7:9
+  |
+7 |         prelude::AsRawFd,
+  |         ^^^^^^^^^^^^^^^^
+
+warning: enum `TextEditMode` is never used
+  --> src/components/text_editor.rs:61:10
+   |
+61 | pub enum TextEditMode {
+   |          ^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: struct `GapCharBuffer` is never constructed
+   --> src/components/text_editor/gap_buffer.rs:123:12
+    |
+123 | pub struct GapCharBuffer {
+    |            ^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src/components/text_editor/gap_buffer.rs:129:12
+    |
+128 | impl GapCharBuffer {
+    | ------------------ associated items in this implementation
+129 |     pub fn new() -> GapCharBuffer {
+    |            ^^^
+...
+136 |     pub fn from_file<File: Read>(file: &mut File) -> Result<Self, std::io::Error> {
+    |            ^^^^^^^^^
+...
+143 |     pub fn with_capacity(n: usize) -> GapCharBuffer {
+    |            ^^^^^^^^^^^^^
+...
+150 |     fn calc_idx(&self, i: usize) -> usize {
+    |        ^^^^^^^^
+...
+160 |     fn shift_gap(&mut self, i: usize) {
+    |        ^^^^^^^^^
+...
+170 |     pub fn get(&self, i: usize) -> Option<&char> {
+    |            ^^^
+...
+175 |     pub fn get_mut(&mut self, i: usize) -> Option<&mut char> {
+    |            ^^^^^^^
+...
+180 |     pub fn swap(&mut self, i: usize, j: usize) {
+    |            ^^^^
+...
+186 |     pub fn capacity(&self) -> usize {
+    |            ^^^^^^^^
+...
+190 |     pub fn reserve(&mut self, additional: usize) {
+    |            ^^^^^^^
+...
+194 |     pub fn iter<'a>(&'a self) -> GapByteBufferIter<'a> {
+    |            ^^^^
+...
+202 |     pub fn iter_from<'a>(&'a self, range: std::ops::RangeFrom<usize>) -> GapByteBufferIter<'a> {
+    |            ^^^^^^^^^
+...
+210 |     pub fn iter_to<'a>(&'a self, range: std::ops::RangeTo<usize>) -> GapByteBufferIter<'a> {
+    |            ^^^^^^^
+...
+218 |     pub fn len(&self) -> usize {
+    |            ^^^
+...
+222 |     pub fn is_empty(&self) -> bool {
+    |            ^^^^^^^^
+...
+226 |     pub fn clear(&mut self) {
+    |            ^^^^^
+...
+231 |     pub fn insert(&mut self, i: usize, t: char) {
+    |            ^^^^^^
+...
+238 |     pub fn remove(&mut self, i: usize) -> Option<char> {
+    |            ^^^^^^
+
+warning: struct `GapByteBufferIter` is never constructed
+   --> src/components/text_editor/gap_buffer.rs:273:12
+    |
+273 | pub struct GapByteBufferIter<'a> {
+    |            ^^^^^^^^^^^^^^^^^
+
+warning: enum `TerminalRequestParseErr` is never used
+ --> src/escapes.rs:8:10
+  |
+8 | pub enum TerminalRequestParseErr {}
+  |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `LibCBool` is never constructed
+  --> src/terminal/lib_c.rs:15:12
+   |
+15 | pub struct LibCBool(c_int);
+   |            ^^^^^^^^
+
+warning: type alias `CSizeT` is never used
+  --> src/terminal/raw_mode.rs:12:10
+   |
+12 | pub type CSizeT = usize;
+   |          ^^^^^^
+
+warning: type alias `CSSizeT` is never used
+  --> src/terminal/raw_mode.rs:13:10
+   |
+13 | pub type CSSizeT = isize;
+   |          ^^^^^^^
+
+warning: method `read` is never used
+  --> src/terminal/raw_mode.rs:55:12
+   |
+47 | impl<'a> FileDesc<'a> {
+   | --------------------- method in this implementation
+...
+55 |     pub fn read(&self, buffer: &mut [u8]) -> std::io::Result<usize> {
+   |            ^^^^
+
+warning: function `read` is never used
+  --> src/terminal/raw_mode.rs:36:8
+   |
+36 |     fn read(fd: c_int, buf: *mut c_void, count: CSizeT) -> CSSizeT;
+   |        ^^^^
+
+warning: `fi_ui` (lib) generated 12 warnings (run `cargo fix --lib -p fi_ui` to apply 2 suggestions)
+warning: unused variable: `bounds`
+  --> examples/hello.rs:12:47
+   |
+12 |     let canvas = CharCanvas::new().on_render(|bounds, this, app_state: &AppState| {
+   |                                               ^^^^^^ help: if this is intentional, prefix it with an underscore: `_bounds`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `app_state`
+   --> examples/hello.rs:135:21
+    |
+135 |         .on_update(|app_state| {
+    |                     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_app_state`
+
+warning: `fi_ui` (example "hello") generated 2 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running `/home/WORK/projects/fi_ui/target/debug/examples/hello`

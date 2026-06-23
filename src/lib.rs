@@ -1,6 +1,5 @@
 mod components;
 mod escapes;
-mod gap_buffer;
 mod point;
 mod terminal;
 

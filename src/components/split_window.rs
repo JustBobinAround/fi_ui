@@ -1,5 +1,5 @@
 use super::TuiComponent;
-use crate::point::{Bounds, Rect, Vec2};
+use crate::point::Bounds;
 use crate::terminal::Terminal;
 
 #[derive(Debug)]
